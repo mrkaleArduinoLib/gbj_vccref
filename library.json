@@ -1,0 +1,12 @@
+{
+  "name": "gbj_vccref",
+  "keywords": "voltage, reference",
+  "description": "The library measures internal reference voltage (1.1V) against AVcc voltage of the internal analog-digital converter and calculates default reference voltage for analog readings.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrkaleArduinoLib/gbj_vccref.git"
+  },
+  "version": "1.0.0",
+  "frameworks": "arduino",
+  "platforms": "atmelavr"
+}
