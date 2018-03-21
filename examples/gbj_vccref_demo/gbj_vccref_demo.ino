@@ -20,7 +20,7 @@
   Author: Libor Gabaj
 */
 #include "gbj_vccref.h"
-#define SKETCH "GBJ_VCCREF_DEMO 1.0.0"
+#define SKETCH "GBJ_VCCREF_DEMO 1.1.0"
 
 #define UNIT_V " mV"
 const int INPUT_DIFF = -16;
@@ -41,21 +41,20 @@ void setup()
   // Print header
   if (SET_VCC)
   {
-    Vref.begin(INPUT_VCC); // Recalculate reference difference
-    Serial.print("Input Vcc: ");
+    Serial.print("Vcc: ");
     Serial.print(INPUT_VCC);
     Serial.println(UNIT_V);
     //
     Serial.print("Factor: ");
     Serial.println(Vref.getFactor());
     //
-    Serial.print("Difference: ");
-    Serial.print(Vref.getDiff());
+    Serial.print("RefDiff: ");
+    Serial.print(Vref.calcDiff(INPUT_VCC));
     Serial.println(UNIT_V);
   }
   else
   {
-    Serial.print("Input difference: ");
+    Serial.print("RefDiff: ");
     Serial.print(INPUT_DIFF);
     Serial.println(UNIT_V);
   }
@@ -64,7 +63,7 @@ void setup()
   Serial.print(Vref.getRef());
   Serial.println(UNIT_V);
   //
-  Serial.print("Current Vcc: ");
+  Serial.print("Vcc: ");
   Serial.print(Vref.measureVcc());
   Serial.print(UNIT_V);
   Serial.print(" at factor: ");

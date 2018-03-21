@@ -10,7 +10,8 @@ gbj_vccref	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-begin	KEYWORD2
+calcVoltage	KEYWORD2
+calcDiff	KEYWORD2
 measureVcc	KEYWORD2
 getFactor	KEYWORD2
 getDiff	KEYWORD2
@@ -20,10 +21,3 @@ getRef	KEYWORD2
 # Constants (LITERAL1)
 #######################################
 GBJ_VCCREF_VERSION	LITERAL1
-GBJ_VCCREF_1V1_DEF	LITERAL1
-GBJ_VCCREF_1V1_MIN	LITERAL1
-GBJ_VCCREF_1V1_MAX	LITERAL1
-GBJ_VCCREF_5V0_DEF	LITERAL1
-GBJ_VCCREF_5V0_MIN	LITERAL1
-GBJ_VCCREF_5V0_MAX	LITERAL1
-GBJ_VCCREF_VAL_MAX	LITERAL1

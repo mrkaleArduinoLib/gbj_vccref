@@ -3,8 +3,8 @@
   Basic usage of the gbjVccRef library
 
   DESCRIPTION:
-  The sketch measures floating analog input pin at default reference voltage,
-  which it measures dynamicly.
+  The sketch measures floating analog input pin at current internal
+  reference voltage.
   - The sketch relies on internal reference difference obtained separately
     and used for initialization of the library.
 
@@ -16,7 +16,7 @@
   Author: Libor Gabaj
 */
 #include "gbj_vccref.h"
-#define SKETCH "GBJ_VCCREF_USE 1.0.0"
+#define SKETCH "GBJ_VCCREF_USE 1.1.0"
 
 #define UNIT_V " mV"
 const int INPUT_DIFF = -16;                 // Internal reference difference in mV
@@ -47,7 +47,7 @@ void loop()
 {
   level = analogRead(PIN_TEST);
   reference = Vref.measureVcc();
-  voltage = ((long)level * (long)reference + (GBJ_VCCREF_VAL_MAX / 2)) / GBJ_VCCREF_VAL_MAX;
+  voltage = Vref.calcVoltage(level);
   Serial.print(level);
   Serial.print("\t");
   Serial.print(voltage);

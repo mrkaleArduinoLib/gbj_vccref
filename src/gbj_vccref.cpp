@@ -4,39 +4,31 @@
 // Constructor with previously figured out internal reference voltage difference
 gbj_vccref::gbj_vccref(int8_t refDiff)
 {
-  _refDiff = constrain(refDiff, GBJ_VCCREF_1V1_MIN - GBJ_VCCREF_1V1_DEF, GBJ_VCCREF_1V1_MAX - GBJ_VCCREF_1V1_DEF);
-}
-
-
-// Setup by measured power supply voltage
-int8_t gbj_vccref::begin(uint16_t inputVcc)
-{
-  _refFactor = readFactor(); // Store recent (current) reference factor
-  _refDiff = ((long)inputVcc * (long)_refFactor + (GBJ_VCCREF_VAL_MAX / 2)) / GBJ_VCCREF_VAL_MAX - GBJ_VCCREF_1V1_DEF;
-  return _refDiff;
-}
-
-
-// Internal reference voltage in millivolts
-uint16_t gbj_vccref::getRef()
-{
-  return GBJ_VCCREF_1V1_DEF + _refDiff;
+  _refDiff = constrain(refDiff, -1 * PRM_1V1_DIF, PRM_1V1_DIF);
 }
 
 
 // Measure current power supply voltage
-uint16_t gbj_vccref::measureVcc()
+uint16_t gbj_vccref::calcVoltage(uint16_t bitLevel)
 {
-  _refFactor = readFactor(); // Store recent (current) reference factor
-  return ((long)getRef() * GBJ_VCCREF_VAL_MAX + ((long)_refFactor / 2)) / (long)_refFactor;
+  uint32_t voltage;
+  // Calculate voltage with integer rounding
+  voltage = (2 * getRef() * bitLevel + _refFactor) / (2 * _refFactor);
+  return voltage;
 }
 
 
-//-------------------------------------------------------------------------
-// Getters
-//-------------------------------------------------------------------------
-int8_t  gbj_vccref::getDiff() { return _refDiff; }
-uint8_t gbj_vccref::getFactor() { return _refFactor; }
+// Calculate internal reference difference from measured power supply voltage
+int8_t gbj_vccref::calcDiff(uint16_t inputVcc)
+{
+  uint32_t refVoltage;
+  // Calculate internal reference factor
+  _refFactor = readFactor();
+  // Calculate internal reference voltage with integer rounding
+  refVoltage = (2 * _refFactor * inputVcc + PRM_BIT_MAX) / (2 * PRM_BIT_MAX);
+  _refDiff = refVoltage - PRM_1V1_REF;
+  return _refDiff;
+}
 
 
 //-------------------------------------------------------------------------
