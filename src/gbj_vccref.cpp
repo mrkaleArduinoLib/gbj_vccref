@@ -1,40 +1,21 @@
 #include "gbj_vccref.h"
 
 
-// Constructor with previously figured out internal reference voltage difference
 gbj_vccref::gbj_vccref(int8_t refDiff)
 {
-  _refDiff = constrain(refDiff, -1 * PRM_1V1_DIF, PRM_1V1_DIF);
+  refDiff = constrain(refDiff, -1 * PRM_1V1_DIF, PRM_1V1_DIF);
+  _refVoltage = refDiff + PRM_1V1_REF;
 }
 
 
-// Measure current power supply voltage
-uint16_t gbj_vccref::calcVoltage(uint16_t bitLevel)
+void gbj_vccref::begin(uint16_t measuredVcc)
 {
-  uint32_t voltage;
-  // Calculate voltage with integer rounding
-  voltage = (2 * getRef() * bitLevel + _refFactor) / (2 * _refFactor);
-  return voltage;
+  _refFactor = calcRefFactor();
+  if (measuredVcc > 0) _refVoltage = (2UL * _refFactor * measuredVcc + PRM_BIT_MAX) / (2 * PRM_BIT_MAX);
 }
 
 
-// Calculate internal reference difference from measured power supply voltage
-int8_t gbj_vccref::calcDiff(uint16_t inputVcc)
-{
-  uint32_t refVoltage;
-  // Calculate internal reference factor
-  _refFactor = readFactor();
-  // Calculate internal reference voltage with integer rounding
-  refVoltage = (2 * _refFactor * inputVcc + PRM_BIT_MAX) / (2 * PRM_BIT_MAX);
-  _refDiff = refVoltage - PRM_1V1_REF;
-  return _refDiff;
-}
-
-
-//-------------------------------------------------------------------------
-// Private methods
-//-------------------------------------------------------------------------
-uint8_t gbj_vccref::readFactor()
+uint8_t gbj_vccref::calcRefFactor()
 {
   // Read 1.1V reference against AVcc
   #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)

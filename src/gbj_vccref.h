@@ -9,20 +9,15 @@
   - As a feature of the microcontroller the library instance object keeps
     the millivolts difference from the standard internal reference voltage
     1.1V (1100 mV), hereinafter referred as "internal reference difference".
-  - The internal reference difference is kept as a signe byte data type, so
+  - The internal reference difference is kept as a signed byte data type, so
     that its value space is -127 ~ +127 mV, which is +/-11.5%, and should
     be sufficient for regular and functional microcontrollers.
-  - The the range of internal reference voltage with expected internal
+  - The range of internal reference voltage with expected internal
     reference difference (1100 +/-127 mV = 973 ~ 1227) expressed in bits
     for 10-bit resolution of microcontroller's ADC and nominal power supply
-    5000 mV related to maximal bit ADC value 1023 is 199 ~ 251
-    (Internal reference voltage / Nominal power supply * 1023), for which
-    unsigned byte is sufficient.
-  - The internal reference volatage 1100mV at nominal power supply 5000mV
-    corresponds to 225 bits.
-  - The question is: if maximal ADC value 1023 corresponds to nominal power
-    supply 5000mV, what ADC value corresponds to internal reference voltage
-    1100 mV?
+    - 5000 mV is 199 ~ 251 bits, nominally 225 bits
+    - 3300 mV is 302 ~ 381 bits, nominally 341 bits
+    (Internal reference voltage / Nominal power supply * 1024)
   - Library is inspired by the Roberto Lo Giacco's library VoltageReference,
     but totally rewritten.
 
@@ -71,18 +66,19 @@ public:
 
   DESCRIPTION:
   Constructor stores the difference of internal reference voltage from
-  standard reference voltage 1.1V.
+  standard reference voltage 1100 mV.
   - The difference is a specific value for individual microcontroller.
   - The difference should be obtained separatelly
     - call constructor without parameters at first
-    - call calcDiff() with real power supply voltage measured by a multimeter
-    - call constructor again with internal reference voltage difference
+    - provide begin() with real power supply voltage measured by a multimeter
+    - call getRefDiff() to obtain internal reference difference
+    - call constructor again with internal reference difference
   - The difference can be stored in one byte of EEPROM memory of the
     microcontroller as its configuration value.
 
   PARAMETERS:
   refDiff - Difference of the internal reference voltage against standard
-            1.1V in millivolts.
+            1100 mV in millivolts.
             - Data type: integer
             - Default value: 0
             - Limited range: -127 ~ 127 (+/-PRM_1V1_DIF)
@@ -90,7 +86,35 @@ public:
   RETURN:
   Library instance object performing the voltage supply adjustment.
 */
-  gbj_vccref(int8_t refDiff = 0);
+gbj_vccref(int8_t refDiff = 0);
+
+
+/*
+  Initialization activities
+
+  DESCRIPTION:
+  The method executes initailizaton actions and flows of the library.
+  - The method calculates internal reference factor, which is the bit value
+    of the internal reference voltage 1.1V at 10-bit ADC resolution.
+  - If measured power supply voltage is provided, i.e., it is not zero,
+    the method calculates real internal reference voltage, which usually differs
+    from 1100 mV.
+  - If measured power supply voltage is not provided, i.e., it is zero,
+    the internal reference difference should be provided to the constructor,
+    else standard voltages are used.
+  - The standard (ideal) internal reference voltage is 1100 mV.
+  - The standard (ideal) power supply Vcc voltage is 5000 or 3300 mV.
+
+  PARAMETERS:
+  measuredVcc - Real measured power supply voltage in millivolts.
+                - Data type: non-negative integer
+                - Default value: 0
+                - Limited range: 0 ~ 65535
+
+  RETURN:
+  None
+*/
+void begin(uint16_t measuredVcc = 0);
 
 
 /*
@@ -98,11 +122,11 @@ public:
 
   DESCRIPTION:
   The method calculates voltage from provided bit level value gained from
-  analog reading with respect to current internal reference difference.
-  - Internal reference difference is kept in the library instance object.
+  analog reading with respect to current internal reference voltage calculated
+  at initialization.
 
   PARAMETERS:
-  bitLevel - Bit representation of the analog reading
+  bitValue - Bit value of the analog reading
              - Data type: positive integer
              - Default value: none
              - Limited range: 0 ~ 1023 (PRM_BIT_MAX)
@@ -110,56 +134,56 @@ public:
   RETURN:
   Voltage in millivolts.
 */
-  uint16_t calcVoltage(uint16_t bitLevel);
+inline uint16_t calcVoltage(uint16_t bitValue) { return (2UL * _refVoltage * bitValue + _refFactor) / (2 * _refFactor); };
 
 
 /*
-  Calculate internal reference difference from measured Vcc
+  Calculate internal reference factor
 
   DESCRIPTION:
-  The method calculates difference of internal reference voltage against
-  standard reference voltage 1100mV from measured power supply voltage.
-  - The standard power supply Vcc voltage is 5000mV.
+  The method reads internal 1.1V reference voltage against AVcc reference
+  voltage of the analog-digital converter.
+  - Reference factor is internal reference voltage as a fraction of AVcc
+    default reference voltage expressed in bits at 10-bit resolution.
+  - At stantard power supply voltage 5V the factor is
+    int(1100 mV / 5000 mV * 1024) = 225.
+  - At stantard power supply voltage 3.3V the factor is
+    int(1100 mV / 3300 mV * 1024) = 341.
+  - The ratio of standard 1100 mV reference voltage and real reference number
+    is voltage per bit resolution, e.g., 1100/225 = 4.89 mV/bit,
+    resp. 1100/341 = 3.23 mV/bit.
 
   PARAMETERS:
-  inputVcc - Real measured input power supply voltage in millivolts.
-             - Data type: positive integer
-             - Default value: 5000 (PRM_5V0_REF)
-             - Limited range: 4500 ~ 5500 (PRM_5V0_REF +/- PRM_5V0_DIF)
+  None
 
   RETURN:
-  Internal reference voltage difference in millivolts.
+  Actual reference factor.
 */
-  int8_t calcDiff(uint16_t inputVcc = PRM_5V0_REF);
+uint8_t calcRefFactor();
 
 
 /*
   Measure current power supply voltage in millivolts
 
   DESCRIPTION:
-  The method calculates current power supply voltage from typical internal
-  reference voltage defined by the internal reference difference provided to
-  the constructor.
+  The method calculates current power supply voltage from internal reference
+  voltage calculated at initialization.
 
-  PARAMETERS: none
+  PARAMETERS:
+  None
 
   RETURN:
   Current power supply voltage in millivolts.
 */
-  inline uint16_t measureVcc() { return calcVoltage(PRM_BIT_MAX); };
+inline uint16_t measureVcc() { return calcVoltage(PRM_BIT_MAX); };
 
 
 //------------------------------------------------------------------------------
 // Public getters
 //------------------------------------------------------------------------------
-  /* Internal reference voltage factor.
-   * It is the number of bits representing the internal reference voltage
-   * as a fraction of power supply voltage expressed as 1023 bits at
-   * 10-bit resolution.
-   */
-  inline uint8_t getFactor() { return _refFactor; };
-  inline int8_t getDiff() { return _refDiff; }; // Reference voltage difference of the microcontroller
-  inline uint16_t getRef() { return PRM_1V1_REF + _refDiff; }; // Reference voltage in millivolt of the microcontroller
+inline uint8_t  getRefFactor()  { return _refFactor; };
+inline uint16_t getRefVoltage() { return _refVoltage; };
+inline int8_t   getRefDiff() { return _refVoltage - PRM_1V1_REF; };
 
 
 private:
@@ -168,44 +192,34 @@ private:
 //------------------------------------------------------------------------------
 enum Parameters
 {
-  PRM_BIT_MAX = 1023  // Maximal bit value of the AD converter
+  PRM_BIT_MAX = 1024, // Bit value range of the AD converter
   PRM_1V1_REF = 1100, // Standard internal reference voltage in millivolts
   PRM_1V1_DIF = 127,  // Reasonable tolerance of internal reference voltage
-  PRM_5V0_REF = 5000, // Standard supply voltage in millivolts
-  PRM_5V0_DIF = 500,  // Reasonable tolerance of standard supply voltage  
 };
 
 
 //------------------------------------------------------------------------------
 // Private attributes
 //------------------------------------------------------------------------------
-  int8_t _refDiff;  // Millivolt difference from standard 1.1V reference
-  uint8_t _refFactor; // Reference factor (bits of internal reference voltage)
-
-
-//------------------------------------------------------------------------------
-// Private methods
-//------------------------------------------------------------------------------
 
 
 /*
-  Read internal reference factor
+  Internal reference voltage factor in bits
+  - It is the number of bits representing the internal reference voltage
+    as a fraction of power supply voltage expressed as 1023 bits value at
+    10-bit resolution.
+  - This is a typical value for particular microcontroller.
+ */
+uint8_t _refFactor;
 
-  DESCRIPTION:
-  The method reads internal 1.1V reference voltage against AVcc reference
-  voltage of the analog-digital converter.
-  - Reference factor is internal reference voltage as a fraction of AVcc
-    default reference voltage expressed in bits at 10-bit resolution.
-  - At stantard voltages the factor is int(1100 mV / 5000 mV * 1024) = 225.
-  - The ratio of standard 1100mV reference voltage and real reference number
-    is voltage per bit resolution, e.g., 1100/225 = 4.89mV/bit.
 
-  PARAMETERS: none
+/*
+  Internal reference voltage in millivolts
+  - Ideally it is the 1100 mV, but in reality it has tolerance +/-10%.
+  - If measured power supply is provided, the library calculates real voltage.
+ */
+uint16_t _refVoltage;
 
-  RETURN:
-  Actual reference factor.
-*/
-  uint8_t readFactor();
 };
 
 #endif

@@ -10,12 +10,13 @@ gbj_vccref	KEYWORD1
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
+begin	KEYWORD2
 calcVoltage	KEYWORD2
-calcDiff	KEYWORD2
+calcRefFactor	KEYWORD2
 measureVcc	KEYWORD2
-getFactor	KEYWORD2
-getDiff	KEYWORD2
-getRef	KEYWORD2
+getRefFactor	KEYWORD2
+getRefVoltage	KEYWORD2
+getRefDiff	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

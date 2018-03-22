@@ -1,16 +1,12 @@
 /*
   NAME:
-  Demonstration of calculations provided by gbjVccRef library
+  Basic usage of the gbjVccRef library
 
   DESCRIPTION:
-  The sketch displays all values included in internal reference voltage
-  measurements.
-  - Setup of the library can be provided by separately obtained internal
-    reference difference or by measured power supply voltage both in mV.
-  - The way of initialition is determined by boolean constant just for
-    demonstration purposes.
-  - The method always recalculates and rewrites the internal reference
-    difference set by the constructor.
+  The sketch measures floating analog input pin at current internal reference
+  voltage.
+  - The sketch relies on internal reference difference obtained separately
+    and used for initialization of the library.
 
   LICENSE:
   This program is free software; you can redistribute it and/or modify
@@ -20,55 +16,54 @@
   Author: Libor Gabaj
 */
 #include "gbj_vccref.h"
-#define SKETCH "GBJ_VCCREF_DEMO 1.1.0"
+#define SKETCH "GBJ_VCCREF_USE 1.1.0"
 
 #define UNIT_V " mV"
-const int INPUT_DIFF = -16;
-const int INPUT_VCC = 5040;
-const bool SET_VCC = true;  // Change it to display another initialization
+const int INPUT_DIFF = -35; // Internal reference difference in mV
+const unsigned int PERIOD_MEASURE = 3000; // Time in miliseconds between measurements
+
+// Hardware configuration
+const unsigned char PIN_TEST = A0;          // Pin for analog reading
 
 // Measurement
+unsigned int level, voltage;
 gbj_vccref Vref = gbj_vccref(INPUT_DIFF);
 
 
 void setup()
 {
+  analogReference(DEFAULT);
+  //
   Serial.begin(9600);
   Serial.println(SKETCH);
   Serial.println("Libraries:");
   Serial.println(GBJ_VCCREF_VERSION);
   Serial.println("---");
-  // Print header
-  if (SET_VCC)
-  {
-    Serial.print("Vcc: ");
-    Serial.print(INPUT_VCC);
-    Serial.println(UNIT_V);
-    //
-    Serial.print("Factor: ");
-    Serial.println(Vref.getFactor());
-    //
-    Serial.print("RefDiff: ");
-    Serial.print(Vref.calcDiff(INPUT_VCC));
-    Serial.println(UNIT_V);
-  }
-  else
-  {
-    Serial.print("RefDiff: ");
-    Serial.print(INPUT_DIFF);
-    Serial.println(UNIT_V);
-  }
+  // Initialization
+  Vref.begin();
   //
-  Serial.print("Reference: ");
-  Serial.print(Vref.getRef());
+  Serial.print("Factor: ");
+  Serial.println(Vref.getRefFactor());
+  //
+  Serial.print("Vref: ");
+  Serial.print(Vref.getRefVoltage());
   Serial.println(UNIT_V);
   //
   Serial.print("Vcc: ");
   Serial.print(Vref.measureVcc());
-  Serial.print(UNIT_V);
-  Serial.print(" at factor: ");
-  Serial.println(Vref.getFactor());
+  Serial.println(UNIT_V);
+  //
+  Serial.println("---");
+  Serial.println("Bits\tInput(mV)");
 }
 
 
-void loop() {}
+void loop()
+{
+  level = analogRead(PIN_TEST);
+  voltage = Vref.calcVoltage(level);
+  Serial.print(level);
+  Serial.print("\t");
+  Serial.println(voltage);
+  delay(PERIOD_MEASURE);
+}
