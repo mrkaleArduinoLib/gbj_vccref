@@ -16,52 +16,45 @@
   Author: Libor Gabaj
 */
 #include "gbj_vccref.h"
-#define SKETCH "GBJ_VCCREF_USE 1.1.0"
 
-#define UNIT_V " mV"
-const int INPUT_DIFF = -35; // Internal reference difference in mV
-const unsigned int PERIOD_MEASURE = 3000; // Time in miliseconds between measurements
+const char UNIT_V[] = " mV";
+// Internal reference difference in mV
+const int INPUT_DIFF = -39;
+// Time in miliseconds between measurements
+const unsigned int PERIOD_MEASURE = 3000;
+// Pin for analog reading
+const unsigned char PIN_TEST = A0;
 
-// Hardware configuration
-const unsigned char PIN_TEST = A0;          // Pin for analog reading
-
-// Measurement
 unsigned int level, voltage;
-gbj_vccref Vref = gbj_vccref(INPUT_DIFF);
-
+gbj_vccref vref = gbj_vccref(INPUT_DIFF);
 
 void setup()
 {
   analogReference(DEFAULT);
   //
   Serial.begin(9600);
-  Serial.println(SKETCH);
-  Serial.println("Libraries:");
-  Serial.println(GBJ_VCCREF_VERSION);
   Serial.println("---");
-  // Initialization
-  Vref.begin();
+  vref.begin();
   //
   Serial.print("Factor: ");
-  Serial.println(Vref.getRefFactor());
+  Serial.println(vref.getRefFactor());
   //
-  Serial.print("Vref: ");
-  Serial.print(Vref.getRefVoltage());
+  Serial.print("vref: ");
+  Serial.print(vref.getRefVoltage());
   Serial.println(UNIT_V);
   //
   Serial.print("Vcc: ");
-  Serial.print(Vref.measureVcc());
+  Serial.print(vref.measureVcc());
   Serial.println(UNIT_V);
   //
   Serial.println("---");
   Serial.println("Bits\tInput(mV)");
 }
 
-
 void loop()
 {
   level = analogRead(PIN_TEST);
-  voltage = Vref.calcVoltage(level);
+  voltage = vref.calcVoltage(level);
   Serial.print(level);
   Serial.print("\t");
   Serial.println(voltage);
